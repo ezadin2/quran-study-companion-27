@@ -19,7 +19,10 @@ async function nativeFix(): Promise<Fix> {
   const pick = (p: { location: string; coarseLocation: string }) => (p.location === "granted" ? "granted" : p.coarseLocation);
   let state = classifyPermission(pick(st));
   if (state === "denied") {
-    const r = await Geolocation.requestPermissions({ permissions: ["location", "coarseLocation"] });
+    let r;
+    // Android rejects (rather than resolving) when Location is switched off in system settings.
+    try { r = await Geolocation.requestPermissions({ permissions: ["location", "coarseLocation"] }); }
+    catch { throw "unavailable" as GeoError; }
     state = classifyPermission(pick(st), pick(r));
   }
   if (state !== "granted") throw state as GeoError;

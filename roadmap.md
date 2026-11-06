@@ -119,3 +119,8 @@
 - [ ] Fix verified causes without redesign; add regression tests and verify browser compatibility.
 - [ ] Supply issue-by-issue findings, changed files, permissions/plugins, and Windows build/install commands.
 - [ ] Build/install and test the APK with device Logcat: requires Android tooling and a connected physical device.
+# Android audio, timers, navigation, sensors audit (uploaded brief)
+- [x] Reviewed lock-screen player, sleep timer, compass and back button code; all native plugins registered.
+- [x] Fixed: location request crashing with location switched off; lock-screen player could fail to update in the background on Android 12+.
+- [x] 97 tests pass.
+- [ ] APK build + on-phone tests (dialogs, reciter picker, sleep timer, background audio, back button, compass): need Android Studio + your phone.

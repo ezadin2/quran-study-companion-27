@@ -38,9 +38,16 @@ public class MediaPlaybackPlugin extends Plugin {
         i.putExtra("playing", Boolean.TRUE.equals(call.getBoolean("playing", false)));
         i.putExtra("position", call.getDouble("position", 0.0));
         i.putExtra("duration", call.getDouble("duration", 0.0));
-        if (Build.VERSION.SDK_INT >= 26) getContext().startForegroundService(i);
-        else getContext().startService(i);
-        call.resolve();
+        try {
+            // Android 12+ forbids startForegroundService() from the background (e.g. the next
+            // ayah starting with the screen locked). Once the service is running it is already
+            // foreground, so a plain startService() delivers the update without that restriction.
+            if (MediaPlaybackService.running || Build.VERSION.SDK_INT < 26) getContext().startService(i);
+            else getContext().startForegroundService(i);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Media service could not start: " + e.getMessage());
+        }
     }
 
     @PluginMethod

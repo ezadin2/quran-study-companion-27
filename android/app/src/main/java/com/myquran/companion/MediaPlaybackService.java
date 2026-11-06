@@ -26,6 +26,7 @@ public class MediaPlaybackService extends Service {
     private static final String CHANNEL = "recitation";
     private static final int NOTIFICATION_ID = 7001;
 
+    static volatile boolean running = false;
     private MediaSessionCompat session;
     private AudioManager audioManager;
     private AudioFocusRequest focusRequest;
@@ -46,6 +47,7 @@ public class MediaPlaybackService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        running = true;
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         session = new MediaSessionCompat(this, "MyQuranRecitation");
         session.setCallback(new MediaSessionCompat.Callback() {
@@ -135,8 +137,13 @@ public class MediaPlaybackService extends Service {
             .setStyle(new MediaStyle().setMediaSession(session.getSessionToken()).setShowActionsInCompactView(0, 1, 2))
             .build();
 
-        if (Build.VERSION.SDK_INT >= 29) startForeground(NOTIFICATION_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
-        else startForeground(NOTIFICATION_ID, n);
+        try {
+            if (Build.VERSION.SDK_INT >= 29) startForeground(NOTIFICATION_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+            else startForeground(NOTIFICATION_ID, n);
+        } catch (RuntimeException e) {
+            // Background start refused by the OS: keep the session/notification instead of crashing.
+            getSystemService(NotificationManager.class).notify(NOTIFICATION_ID, n);
+        }
         // While paused, let the user swipe the notification away; the service stays until stop().
         if (!playing && Build.VERSION.SDK_INT >= 24) stopForeground(STOP_FOREGROUND_DETACH);
         return START_NOT_STICKY;
@@ -147,6 +154,7 @@ public class MediaPlaybackService extends Service {
 
     @Override
     public void onDestroy() {
+        running = false;
         abandonFocus();
         session.setActive(false);
         session.release();
